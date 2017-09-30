@@ -41,6 +41,7 @@ import processing.app.helpers.PreferencesMap;
 import processing.app.helpers.PreferencesMapException;
 import processing.app.helpers.ProcessUtils;
 import processing.app.helpers.StringReplacer;
+import processing.app.helpers.OSUtils;
 import processing.app.legacy.PApplet;
 import processing.app.tools.DoubleQuotedArgumentsOnWindowsCommandLine;
 
@@ -142,6 +143,8 @@ public class Compiler implements MessageConsumer {
   private File buildCache;
   private final boolean verbose;
   private RunnerException exception;
+  private boolean printAsError;
+  private int messageCount;
 
   public Compiler(Sketch data) {
     this(data.getPrimaryFile().getFile(), data);
@@ -272,7 +275,12 @@ public class Compiler implements MessageConsumer {
       .stream()
       .forEach(kv -> cmd.add("-prefs=" + kv.getKey() + "=" + kv.getValue()));
 
-    cmd.add("-prefs=build.warn_data_percentage=" + PreferencesData.get("build.warn_data_percentage"));
+    if (!BaseNoGui.isTeensyduino()) {
+      // Teensy provides this setting for all boards, so don't override it with 75%
+      cmd.add("-prefs=build.warn_data_percentage=" + PreferencesData.get("build.warn_data_percentage"));
+    }
+    printAsError = true;
+    messageCount = 0;
 
     for (Map.Entry<String, String> entry : BaseNoGui.getBoardPreferences().entrySet()) {
         if (entry.getKey().startsWith("runtime.tools")) {
@@ -506,6 +514,8 @@ public class Compiler implements MessageConsumer {
   public void message(String s) {
     int i;
 
+    if (BaseNoGui.isTeensyduino()) { message_Teensy(s); return; }
+
     if (!verbose) {
       while ((i = s.indexOf(buildPath + File.separator)) != -1) {
         s = s.substring(0, i) + s.substring(i + (buildPath + File.separator).length());
@@ -608,4 +618,109 @@ public class Compiler implements MessageConsumer {
     }
     return null;
   }
+
+
+  private void message_Teensy(String s) {
+    //System.out.println("\nOriginal message: \"" + s + "\"");
+    messageCount++;
+    String[] pieces = PApplet.match(s.trim(), "(\\w+\\.\\w+):(\\d+):\\d+:\\s*error:\\s*(.+)");
+    if (pieces != null) {
+      //System.out.println("Case 1: Error");
+      printAsError = true;
+      RunnerException e = placeException(pieces[3], pieces[1], PApplet.parseInt(pieces[2]) - 1);
+      if (e != null) {
+        String fileName = e.getCodeFile().getPrettyName();
+        int lineNum = e.getCodeLine() + 1;
+        s = fileName + ":" + lineNum + ": error: " + pieces[3];
+        if (exception == null) {
+          e.hideStackTrace();
+          exception = e;
+        }
+      }
+      System.err.println(s);
+      s = message_advice_Teensy(pieces[3].trim());
+      if (s != null) System.err.println(s);
+    } else {
+      pieces = PApplet.match(s.trim(), "(\\w+\\.\\w+):(\\d+):\\d+:\\s*warning:\\s*(.+)\\s*\\[-W[-a-z0-9]+\\]");
+      if (pieces != null) {
+        //System.out.println("Case 2: Warning");
+        printAsError = false;
+        RunnerException e = placeException(pieces[3], pieces[1], PApplet.parseInt(pieces[2]) - 1);
+        if (e != null) {
+          String fileName = e.getCodeFile().getPrettyName();
+          int lineNum = e.getCodeLine() + 1;
+          s = fileName + ":" + lineNum + ": warning: " + pieces[3];
+        }
+        System.out.println(s);
+      } else {
+        pieces = PApplet.match(s.trim(), "(\\w+\\.\\w+):\\s*In function\\s*(.+)");
+        if (pieces != null) {
+          //System.out.println("Case 3: In function");
+          RunnerException e = placeException(pieces[2], pieces[1], 0);
+          if (e != null) {
+            String fileName = e.getCodeFile().getPrettyName();
+            s = fileName + ": In function " + pieces[2];
+          }
+          System.out.println(s);
+        } else {
+          if (s.equals("exit status 1")) {
+            //System.out.println("Case 4: exit status 1");
+            if (messageCount <= 1) {
+              System.err.println("Oh no, the compiler quit with an error, but did not print any error messages!");
+              System.err.println("Your computer may be running out of memory or resources.  Try closing other");
+              System.err.println("windows or programs");
+            }
+          } else {
+            //System.out.println("Case 5: other stuff (likely quoting code)");
+            if (printAsError) {
+              System.err.println(s);
+            } else {
+              System.out.println(s);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private String message_advice_Teensy(String s) {
+    if (s.equals("'Keyboard' was not declared in this scope")) {
+      return "To make a USB Keyboard, use the Tools > USB Type menu";
+    }
+    if (s.equals("'Mouse' was not declared in this scope")) {
+      return "To make a USB Mouse, use the Tools > USB Type menu";
+    }
+    if (s.equals("'Joystick' was not declared in this scope")) {
+      return "To make a USB Joystick, use the Tools > USB Type menu";
+    }
+    if (s.equals("'Disk' was not declared in this scope")) {
+      return "To make a USB Disk, use the Tools > USB Type menu";
+    }
+    if (s.equals("'usbMIDI' was not declared in this scope")) {
+      return "To make a USB MIDI device, use the Tools > USB Type menu";
+    }
+    if (s.equals("'RawHID' was not declared in this scope")) {
+      return "To make a USB RawHID device, use the Tools > USB Type menu";
+    }
+    if (s.equals("'FlightSimCommand' was not declared in this scope")) {
+      return "To make a Flight Simulator device, use the Tools > USB Type menu";
+    }
+    if (s.equals("'FlightSimInteger' was not declared in this scope")) {
+      return "To make a Flight Simulator device, use the Tools > USB Type menu";
+    }
+    if (s.equals("'FlightSimFloat' was not declared in this scope")) {
+      return "To make a Flight Simulator device, use the Tools > USB Type menu";
+    }
+    if (s.equals("'FlightSim' was not declared in this scope")) {
+      return "To make a Flight Simulator device, use the Tools > USB Type menu";
+    }
+    if (s.equals("'AudioInputUSB' does not name a type")) {
+      return "To make an USB Audio device, use the Tools > USB Type menu";
+    }
+    if (s.equals("'AudioOutputUSB' does not name a type")) {
+      return "To make an USB Audio device, use the Tools > USB Type menu";
+    }
+    return null;
+  }
+
 }

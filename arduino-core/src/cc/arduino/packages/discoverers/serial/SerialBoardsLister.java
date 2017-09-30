@@ -152,6 +152,8 @@ public class SerialBoardsLister extends TimerTask {
         if (board != null) {
           String boardName = board.getName();
           if (boardName != null) {
+            // Teensy uses same VID/PID for all models
+            if (boardName.startsWith("Teensy")) boardName = "Teensy";
             label += " (" + boardName + ")";
           }
           boardPort.setBoardName(boardName);

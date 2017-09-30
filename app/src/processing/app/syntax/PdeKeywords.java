@@ -125,6 +125,11 @@ public class PdeKeywords {
 
         if (pieces.length >= 2) {
           keywordOldToken.put(keyword, pieces[1]);
+          if ("LITERAL1".equals(pieces[1])) {
+            // quick kuldge to fix Arduino issue #4572, wrote LITERAL1 color
+            // https://github.com/arduino/Arduino/issues/4572
+            parseRSyntaxTextAreaTokenType("RESERVED_WORD_2", keyword);
+          }
         }
 
         if (pieces.length >= 3) {

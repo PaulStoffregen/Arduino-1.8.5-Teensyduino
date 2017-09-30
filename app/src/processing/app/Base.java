@@ -1707,6 +1707,43 @@ public class Base {
     return addSketchesSubmenu(menu, lib.getName(), lib.getInstalledFolder());
   }
 
+  private void warnExampleDuplicateLibrary(File file) {
+    if (!BaseNoGui.isTeensyduino()) return;
+    File parentdir = file;
+    do {
+      parentdir = parentdir.getParentFile();
+      if (parentdir == null) return;
+    } while (!parentdir.getName().equals("examples"));
+    parentdir = parentdir.getParentFile();
+    if (parentdir == null) return;
+    //System.out.println("parent dir " + parentdir.getPath());
+    UserLibrary lib = null;
+    for (UserLibrary l : BaseNoGui.librariesIndexer.getInstalledLibraries()) {
+      if (parentdir.equals(l.getInstalledFolder())) {
+        //System.out.println("found library " + l.getName());
+        lib = l;
+        break;
+      }
+    }
+    if (lib == null) return;
+    String name = lib.getName();
+    if (name == null) return;
+    boolean first = true;
+    for (UserLibrary dup : BaseNoGui.librariesIndexer.getInstalledLibrariesWithDuplicates()) {
+      if (name.equals(dup.getName())) {
+        File dupdir = dup.getInstalledFolder();
+        if (!parentdir.equals(dupdir)) {
+          if (first) {
+            System.out.println(I18n.format(tr("Duplicate \"{0}\" libraries:"), name));
+            System.out.println(I18n.format(tr("      using: {0}"), parentdir.getPath()));
+            first = false;
+          }
+          System.out.println(I18n.format(tr("  not using: {0}"), dupdir.getPath()));
+        }
+      }
+    }
+  }
+
   private boolean addSketchesSubmenu(JMenu menu, String name, File folder) {
 
     ActionListener listener = new ActionListener() {
@@ -1715,6 +1752,7 @@ public class Base {
         File file = new File(path);
         if (file.exists()) {
           try {
+            warnExampleDuplicateLibrary(file);
             handleOpen(file);
           } catch (Exception e1) {
             e1.printStackTrace();
@@ -1826,8 +1864,13 @@ public class Base {
 
         Font f = new Font("SansSerif", Font.PLAIN, Theme.scale(11));
         g.setFont(f);
-        g.setColor(new Color(0,151,156));
-        g.drawString(BaseNoGui.VERSION_NAME_LONG, Theme.scale(33), Theme.scale(20));
+        g.setColor(Color.black);
+        g.drawString("Arduino " + BaseNoGui.VERSION_NAME_LONG, Theme.scale(28), Theme.scale(16));
+        if (BaseNoGui.teensyduino_version != null) {
+          FontMetrics m = g.getFontMetrics(g.getFont());
+          String td = "Teensyduino " + BaseNoGui.teensyduino_version;
+          g.drawString(td, Theme.scale(448 - m.stringWidth(td)), Theme.scale(16));
+        }
       }
     };
     window.addMouseListener(new MouseAdapter() {

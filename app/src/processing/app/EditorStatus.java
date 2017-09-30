@@ -343,6 +343,7 @@ public class EditorStatus extends JPanel {
     copyErrorButton.addActionListener(e -> {
       String message1 = "";
       message1 += tr("Arduino: ") + BaseNoGui.VERSION_NAME_LONG + " (" + System.getProperty("os.name") + "), ";
+      message1 += "TD: " + BaseNoGui.teensyduino_version + ", ";
       message1 += tr("Board: ") + "\"" + BaseNoGui.getBoardPreferences().get("name") + "\"\n\n";
       message1 += editor.console.getText();
       if (!(PreferencesData.getBoolean("build.verbose"))) {

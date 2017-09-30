@@ -131,6 +131,8 @@ public class Serial implements SerialPortEventListener {
     if (istopbits == 1.5f) stopbits = SerialPort.STOPBITS_1_5;
     if (istopbits == 2) stopbits = SerialPort.STOPBITS_2;
 
+    if (iname == "fake serial") return;
+
     try {
       port = new SerialPort(iname);
       port.openPort();
@@ -271,6 +273,26 @@ public class Serial implements SerialPortEventListener {
                       .onMalformedInput(CodingErrorAction.REPLACE)
                       .onUnmappableCharacter(CodingErrorAction.REPLACE)
                       .replaceWith("\u2e2e");
+  }
+
+  public void setBaud(int rate) {
+    if (port == null) return;
+    try {
+      port.setParams(rate, 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+    } catch (SerialPortException e) {
+    }
+  }
+  public boolean isOnline() {
+    if (port == null) return false;
+    if (!(port.isOpened())) return false;
+    boolean online;
+    try {
+      online = port.setDTR(true);
+    } catch (Exception e) {
+      online = false;
+    }
+    //System.out.println("set dtr, result = " + online);
+    return online;
   }
 
   static public List<String> list() {
