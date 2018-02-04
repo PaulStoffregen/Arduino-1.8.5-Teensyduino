@@ -33,6 +33,7 @@ import processing.app.AbstractMonitor;
 import processing.app.NetworkMonitor;
 import processing.app.SerialMonitor;
 import processing.app.TeensyMonitor;
+import processing.app.TeensyPipeMonitor;
 
 public class MonitorFactory {
 
@@ -45,6 +46,9 @@ public class MonitorFactory {
         // SSH not supported, no monitor support
         return null;
       }
+    }
+    if ("Teensy".equals(port.getProtocol())) {
+      return new TeensyPipeMonitor(port);
     }
     if ("teensy".equals(port.getProtocol())) {
       return new TeensyMonitor(port);

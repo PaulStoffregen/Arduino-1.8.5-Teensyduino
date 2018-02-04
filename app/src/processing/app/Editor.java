@@ -2369,7 +2369,9 @@ public class Editor extends JFrame implements RunnerListener {
 
     if (BaseNoGui.isTeensyduino()) {
       if (port == null) port = new BoardPort();
-      port.setProtocol("teensy"); // causes TeensyMonitor to be used
+      if (port.getProtocol().equals("serial")) {
+        port.setProtocol("teensy"); // causes TeensyMonitor to be used
+      }
       if (BaseNoGui.getBoardPreferences().get("fake_serial") != null)
         port.setAddress("fake serial");
     }
@@ -2379,6 +2381,12 @@ public class Editor extends JFrame implements RunnerListener {
     }
 
     serialMonitor = new MonitorFactory().newMonitor(port);
+
+    if (BaseNoGui.isTeensyduino()) {
+      if (port.getProtocol().equals("teensy")) {
+        port.setProtocol("serial"); // undo the change from above
+      }
+    }
     
     if (serialMonitor == null) {
       String board = port.getPrefs().get("board");
@@ -2761,7 +2769,7 @@ public class Editor extends JFrame implements RunnerListener {
     lineStatus.setSerialPort(PreferencesData.get("serial.port"));
     lineStatus.repaint();
     if (BaseNoGui.isTeensyduino()) {
-      if (serialMonitor != null && !(serialMonitor instanceof TeensyMonitor)) {
+      if (serialMonitor != null && !((serialMonitor instanceof TeensyMonitor) || (serialMonitor instanceof TeensyPipeMonitor))) {
         if (!(serialMonitor.isClosed())) {
           try {
             serialMonitor.close();
