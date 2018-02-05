@@ -19,14 +19,12 @@ package processing.app;
 import cc.arduino.packages.BoardPort;
 import processing.app.legacy.PApplet;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
-import processing.app.helpers.PreferencesMap;
-import processing.app.helpers.OSUtils;
 import static processing.app.I18n.tr;
 
 public class TeensyPipeMonitor extends AbstractTextMonitor {
@@ -34,6 +32,7 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 	private final boolean debug = true;
 	Process program=null;
 	inputPipeListener listener=null;
+	errorPipeListener errors=null;
 
 	public TeensyPipeMonitor(BoardPort port) {
 		super(port);
@@ -88,6 +87,9 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 			listener.input = program.getInputStream();
 			listener.output = this;
 			listener.start();
+			errors = new errorPipeListener();
+			errors.input = program.getErrorStream();
+			errors.start();
 			super.open();
 		}
 	}
@@ -97,6 +99,14 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 		if (program != null) {
 			program.destroy();
 			program = null;
+		}
+		if (listener != null) {
+			if (listener.isAlive()) listener.interrupt();
+			listener = null;
+		}
+		if (errors != null) {
+			if (errors.isAlive()) errors.interrupt();
+			errors = null;
 		}
 		super.close();
 	}
@@ -108,7 +118,7 @@ class inputPipeListener extends Thread {
 	TeensyPipeMonitor output;
 
 	public void run() {
-		byte[] buffer = new byte[1024];
+		byte[] buffer = new byte[65536];
 		try {
 			while (true) {
 				int num = input.read(buffer);
@@ -121,6 +131,25 @@ class inputPipeListener extends Thread {
 				//System.out.println("inputPipeListener, out=" + chars.length);
 			}
 		} catch (Exception e) { }
+		System.out.println("inputPipeListener thread exit");
+	}
+
+}
+
+class errorPipeListener extends Thread {
+	InputStream input;
+
+	public void run() {
+		byte[] buffer = new byte[1024];
+		try {
+			while (true) {
+				int num = input.read(buffer);
+				if (num <= 0) break;
+				String text = new String(buffer, 0, num);
+				System.err.print(text);
+			}
+		} catch (Exception e) { }
+		System.out.println("errorPipeListener thread exit");
 	}
 
 }
