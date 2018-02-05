@@ -44,7 +44,7 @@ public class TeensyMonitor extends AbstractTextMonitor {
 
   public TeensyMonitor(BoardPort port) {
     super(port);
-    if (debug) System.out.println("TeensyMonitor constructor");
+    if (debug) System.out.println("TeensyMonitor constructor " + port.getAddress());
 
     serialRate = PreferencesData.getInteger("serial.debug_rate");
     serialRates.setSelectedItem(serialRate + " " + tr("baud"));
@@ -108,11 +108,14 @@ public class TeensyMonitor extends AbstractTextMonitor {
   }
 
   private String teensyPortName() {
-    if (BaseNoGui.getBoardPreferences().get("fake_serial") == null) {
-       return getBoardPort().getAddress();
-    } else {
-       return "(emulated serial)";
-    }
+    String addr = getBoardPort().getAddress();
+    if (addr.equals("fake serial")) return "(emulated serial)";
+    return addr;
+//    if (BaseNoGui.getBoardPreferences().get("fake_serial") == null) {
+//       return getBoardPort().getAddress();
+//    } else {
+//       return "(emulated serial)";
+//    }
   }
 
   // called from Editor.java
@@ -125,7 +128,10 @@ public class TeensyMonitor extends AbstractTextMonitor {
     if (onlineChecker != null) onlineChecker.interrupt();
 
     PreferencesMap prefs = BaseNoGui.getBoardPreferences();
-    String fake = prefs.get("fake_serial");
+    //String fake = prefs.get("fake_serial");
+    String fake = null;
+    if (getBoardPort().getAddress().equals("fake serial")) fake = "teensy_gateway";
+    
     boolean restart = prefs.getBoolean("serial.restart_cmd");
 
     if (fake == null) {

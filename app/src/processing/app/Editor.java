@@ -1069,19 +1069,18 @@ public class Editor extends JFrame implements RunnerListener {
   private void populatePortMenu() {
     portMenu.removeAll();
 
-    if (BaseNoGui.isTeensyduino()) {
-      if (BaseNoGui.getBoardPreferences().get("fake_serial") != null) {
-        portMenu.setEnabled(false);
-        portMenu.setText(tr("Port") + " (emulated serial)");
-        return;
-      } else {
-        portMenu.setText(tr("Port"));
-      }
-    }
-
     String selectedPort = PreferencesData.get("serial.port");
 
     List<BoardPort> ports = Base.getDiscoveryManager().discovery();
+
+    if (BaseNoGui.isTeensyduino()) {
+      // When Teensy is used, always add "(emulated serial)" to the Ports menu
+      BoardPort emu = new BoardPort();
+      emu.setProtocol("serial");
+      emu.setAddress("fake serial");
+      emu.setLabel("(emulated serial)");
+      ports.add(emu);
+    }
 
     ports = platform.filterPorts(ports, PreferencesData.getBoolean("serial.ports.showall"));
 
@@ -2368,12 +2367,25 @@ public class Editor extends JFrame implements RunnerListener {
     BoardPort port = Base.getDiscoveryManager().find(PreferencesData.get("serial.port"));
 
     if (BaseNoGui.isTeensyduino()) {
-      if (port == null) port = new BoardPort();
-      if (port.getProtocol().equals("serial")) {
-        port.setProtocol("teensy"); // causes TeensyMonitor to be used
+      if (port != null) {
+        String protocol = port.getProtocol();
+        if (protocol != null && protocol.equals("serial")) {
+          port.setProtocol("teensy"); // causes TeensyMonitor to be used
+        }
+      } else {
+        String pref = PreferencesData.get("serial.port");
+	if (pref != null && pref.equals("fake serial")) {
+          // When "(emulated serial)" is selected, Arduino's DiscoveryManager
+          // can't find it and fill in the BoardPort info.  Even though we
+          // created one to put into the menu, simplest solution is to create
+          // another temporary BoardPort only for the sake of starting the
+          // serial monitor
+          port = new BoardPort();
+          port.setProtocol("teensy");
+          port.setAddress("fake serial");
+          port.setLabel("(emulated serial)");
+        }
       }
-      if (BaseNoGui.getBoardPreferences().get("fake_serial") != null)
-        port.setAddress("fake serial");
     }
     if (port == null) {
       statusError(I18n.format(tr("Board at {0} is not available"), PreferencesData.get("serial.port")));
