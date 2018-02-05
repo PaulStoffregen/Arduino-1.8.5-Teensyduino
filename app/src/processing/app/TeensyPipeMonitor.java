@@ -94,8 +94,10 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 
 	public void close() throws Exception {
 		if (debug) System.out.println("TeensyPipeMonitor close");
-		program.destroy();
-		program = null;
+		if (program != null) {
+			program.destroy();
+			program = null;
+		}
 		super.close();
 	}
 
