@@ -29,7 +29,7 @@ import static processing.app.I18n.tr;
 
 public class TeensyPipeMonitor extends AbstractTextMonitor {
 
-	private final boolean debug = true;
+	private final boolean debug = false;
 	private String teensyname=null;
 	Process program=null;
 	inputPipeListener listener=null;
@@ -41,10 +41,8 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 		String[] pieces = port.getLabel().trim().split("[\\(\\)]");
 		if (pieces.length > 2 && pieces[1].startsWith("Teensy")) {
 			teensyname = pieces[1];
-			if (debug) System.out.println("Teensyname = " + teensyname);
 		} else {
 			teensyname = "Teensy";
-			if (debug) System.out.println("Teensyname default");
 		}
 		serialRates.hide();
 		disconnect();
