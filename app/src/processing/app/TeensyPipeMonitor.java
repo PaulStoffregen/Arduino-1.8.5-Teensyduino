@@ -30,6 +30,7 @@ import static processing.app.I18n.tr;
 public class TeensyPipeMonitor extends AbstractTextMonitor {
 
 	private final boolean debug = true;
+	private String teensyname=null;
 	Process program=null;
 	inputPipeListener listener=null;
 	errorPipeListener errors=null;
@@ -37,6 +38,16 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 	public TeensyPipeMonitor(BoardPort port) {
 		super(port);
 		if (debug) System.out.println("TeensyPipeMonitor ctor, port=" + port.getAddress());
+		String[] pieces = port.getLabel().trim().split("[\\(\\)]");
+		if (pieces.length > 2 && pieces[1].startsWith("Teensy")) {
+			teensyname = pieces[1];
+			if (debug) System.out.println("Teensyname = " + teensyname);
+		} else {
+			teensyname = "Teensy";
+			if (debug) System.out.println("Teensyname default");
+		}
+		serialRates.hide();
+		disconnect();
 
 		onClearCommand(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -58,7 +69,7 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 						try {
 							out.write(b);
 							out.flush();
-							System.out.println("wrote " + b.length);
+							//System.out.println("wrote " + b.length);
 						} catch (Exception e1) { }
 					}
 				}
@@ -70,7 +81,6 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 	public void open() throws Exception {
 		String port = getBoardPort().getAddress();
 		if (debug) System.out.println("TeensyPipeMonitor open " + port);
-
 		String[] cmdline = new String[2];
 		cmdline[0] = BaseNoGui.getHardwarePath() + File.separator +
 			"tools" + File.separator + "teensy_serialmon";
@@ -89,6 +99,7 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 			listener.start();
 			errors = new errorPipeListener();
 			errors.input = program.getErrorStream();
+			errors.output = this;
 			errors.start();
 			super.open();
 		}
@@ -108,9 +119,22 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 			if (errors.isAlive()) errors.interrupt();
 			errors = null;
 		}
+		setTitle("[offline] (" + teensyname + ")");
 		super.close();
 	}
 
+	public void opened(String device, String usbtype) {
+		if (debug) System.out.println("opened, dev=" + device + ", name=" + usbtype);
+		textArea.setText("");
+		setTitle(device + " (" + teensyname + ") " + usbtype);
+		enableWindow(true);
+	}
+
+	public void disconnect() {
+		if (debug) System.out.println("disconnect");
+		setTitle("[offline] (" + teensyname + ")");
+		enableWindow(false);
+	}
 };
 
 class inputPipeListener extends Thread {
@@ -131,13 +155,14 @@ class inputPipeListener extends Thread {
 				//System.out.println("inputPipeListener, out=" + chars.length);
 			}
 		} catch (Exception e) { }
-		System.out.println("inputPipeListener thread exit");
+		//System.out.println("inputPipeListener thread exit");
 	}
 
 }
 
 class errorPipeListener extends Thread {
 	InputStream input;
+	TeensyPipeMonitor output;
 
 	public void run() {
 		byte[] buffer = new byte[1024];
@@ -146,10 +171,19 @@ class errorPipeListener extends Thread {
 				int num = input.read(buffer);
 				if (num <= 0) break;
 				String text = new String(buffer, 0, num);
-				System.err.print(text);
+				if (text.startsWith("Opened ")) {
+					String parts[] = text.trim().split(" ", 3);
+					if (parts.length == 3) {
+						output.opened(parts[1], parts[2]);
+					}
+				} else if (text.startsWith("Disconnect ")) {
+					output.disconnect();
+				} else {
+					System.err.print(text);
+				}
 			}
 		} catch (Exception e) { }
-		System.out.println("errorPipeListener thread exit");
+		//System.out.println("errorPipeListener thread exit");
 	}
 
 }
