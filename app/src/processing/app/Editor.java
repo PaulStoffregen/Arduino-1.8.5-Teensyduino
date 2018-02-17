@@ -1074,12 +1074,14 @@ public class Editor extends JFrame implements RunnerListener {
     List<BoardPort> ports = Base.getDiscoveryManager().discovery();
 
     if (BaseNoGui.isTeensyduino()) {
-      // When Teensy is used, always add "(emulated serial)" to the Ports menu
-      BoardPort emu = new BoardPort();
-      emu.setProtocol("serial");
-      emu.setAddress("fake serial");
-      emu.setLabel("(emulated serial)");
-      ports.add(emu);
+      if (BaseNoGui.getBoardPreferences().get("fake_serial") != null) {
+        // When Teensy set for non-serial, add "(emulated serial)" to the Ports menu
+        BoardPort emu = new BoardPort();
+        emu.setProtocol("serial");
+        emu.setAddress("fake serial");
+        emu.setLabel("(emulated serial)");
+        ports.add(emu);
+      }
     }
 
     ports = platform.filterPorts(ports, PreferencesData.getBoolean("serial.ports.showall"));
