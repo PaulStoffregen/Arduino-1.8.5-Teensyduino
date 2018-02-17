@@ -121,7 +121,14 @@ public class TeensyDiscovery implements Discovery {
 					board = new BoardPort();
 					board.setProtocol("Teensy"); // Ports menu category
 					board.setAddress(fields[0]); // used to open port
-					board.setLabel(fields[1]);   // name shown in Ports menu
+					String label = fields[1];
+					if (label.startsWith("\\\\?\\")) {
+						label = label.substring(4);
+					}
+					if (label.length() > 30) {
+						label = label.substring(0, 30) + "...";
+					}
+					board.setLabel(label); // name shown in Ports menu
 					ports.add(board);
 				}
 			}
