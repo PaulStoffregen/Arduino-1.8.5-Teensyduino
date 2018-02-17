@@ -125,8 +125,10 @@ public class TeensyDiscovery implements Discovery {
 					if (label.startsWith("\\\\?\\")) {
 						label = label.substring(4);
 					}
-					if (label.length() > 30) {
-						label = label.substring(0, 30) + "...";
+					int teensyindex = label.indexOf("(Teensy");
+					if (teensyindex > 21) {
+						label = label.substring(0, 21) + "... " +
+							label.substring(teensyindex);
 					}
 					board.setLabel(label); // name shown in Ports menu
 					ports.add(board);
