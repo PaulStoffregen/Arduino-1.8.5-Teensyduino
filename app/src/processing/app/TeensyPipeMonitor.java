@@ -18,6 +18,7 @@ package processing.app;
 
 import cc.arduino.packages.BoardPort;
 import processing.app.legacy.PApplet;
+import processing.app.PreferencesData;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -79,10 +80,19 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 	public void open() throws Exception {
 		String port = getBoardPort().getAddress();
 		if (debug) System.out.println("TeensyPipeMonitor open " + port);
-		String[] cmdline = new String[2];
-		cmdline[0] = BaseNoGui.getHardwarePath() + File.separator +
+		String[] cmdline;
+		String command = BaseNoGui.getHardwarePath() + File.separator +
 			"tools" + File.separator + "teensy_serialmon";
-		cmdline[1] = port;
+		if (PreferencesData.getBoolean("upload.verbose")) {
+			cmdline = new String[3];
+			cmdline[0] = command;
+			cmdline[1] = "-v";
+			cmdline[2] = port;
+		} else {
+			cmdline = new String[2];
+			cmdline[0] = command;
+			cmdline[1] = port;
+		}
 		try {
 			program = Runtime.getRuntime().exec(cmdline);
 		} catch (Exception e1) {
