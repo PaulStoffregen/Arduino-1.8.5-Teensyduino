@@ -987,6 +987,11 @@ public class BaseNoGui {
     BoardPort boardPort = getDiscoveryManager().find(port, true);
     if (boardPort != null) {
       PreferencesData.set("serial.port.iserial", boardPort.getPrefs().get("iserial"));
+      PreferencesData.set("serial.port.label", boardPort.getLabel());
+      PreferencesData.set("serial.port.protocol", boardPort.getProtocol());
+    } else {
+      PreferencesData.set("serial.port.label", "(null)");
+      PreferencesData.set("serial.port.protocol", "(null)");
     }
     String portFile = port;
     if (port.startsWith("/dev/")) {
