@@ -25,6 +25,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.util.*;
 import static processing.app.I18n.tr;
 
@@ -173,25 +175,25 @@ class errorPipeListener extends Thread {
 	TeensyPipeMonitor output;
 
 	public void run() {
-		byte[] buffer = new byte[1024];
+		InputStreamReader reader = new InputStreamReader(input);
+		BufferedReader in = new BufferedReader(reader);
 		try {
 			while (true) {
-				int num = input.read(buffer);
-				if (num <= 0) break;
-				String text = new String(buffer, 0, num);
-				if (text.startsWith("Opened ")) {
-					String parts[] = text.trim().split(" ", 3);
+				String line = in.readLine();
+				//System.err.print("line: ");
+				if (line.startsWith("Opened ")) {
+					String parts[] = line.trim().split(" ", 3);
 					if (parts.length == 3) {
 						output.opened(parts[1], parts[2]);
 					}
-				} else if (text.startsWith("Disconnect ")) {
+				} else if (line.startsWith("Disconnect ")) {
 					output.disconnect();
 				} else {
-					System.err.print(text);
+					System.err.println(line);
 				}
 			}
 		} catch (Exception e) { }
-		//System.out.println("errorPipeListener thread exit");
+		System.out.println("errorPipeListener thread exit");
 	}
 
 }
