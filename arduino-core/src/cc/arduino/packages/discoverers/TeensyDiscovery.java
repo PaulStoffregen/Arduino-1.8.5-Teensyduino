@@ -126,8 +126,8 @@ public class TeensyDiscovery implements Discovery {
 						label = label.substring(4);
 					}
 					int teensyindex = label.indexOf("(Teensy");
-					if (teensyindex > 21) {
-						label = label.substring(0, 21) + "... " +
+					if (teensyindex > 23) {
+						label = label.substring(0, 23) + "... " +
 							label.substring(teensyindex);
 					}
 					board.setLabel(label); // name shown in Ports menu
