@@ -85,16 +85,16 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 		String[] cmdline;
 		String command = BaseNoGui.getHardwarePath() + File.separator +
 			"tools" + File.separator + "teensy_serialmon";
-		if (PreferencesData.getBoolean("upload.verbose")) {
-			cmdline = new String[3];
-			cmdline[0] = command;
-			cmdline[1] = "-v";
-			cmdline[2] = port;
-		} else {
+		//if (PreferencesData.getBoolean("upload.verbose")) {
+			//cmdline = new String[3];
+			//cmdline[0] = command;
+			//cmdline[1] = "-v";
+			//cmdline[2] = port;
+		//} else {
 			cmdline = new String[2];
 			cmdline[0] = command;
 			cmdline[1] = port;
-		}
+		//}
 		try {
 			program = Runtime.getRuntime().exec(cmdline);
 		} catch (Exception e1) {
@@ -165,7 +165,7 @@ class inputPipeListener extends Thread {
 				//System.out.println("inputPipeListener, out=" + chars.length);
 			}
 		} catch (Exception e) { }
-		//System.out.println("inputPipeListener thread exit");
+		// System.out.println("inputPipeListener thread exit");
 	}
 
 }
@@ -193,7 +193,7 @@ class errorPipeListener extends Thread {
 				}
 			}
 		} catch (Exception e) { }
-		System.out.println("errorPipeListener thread exit");
+		// System.out.println("errorPipeListener thread exit");
 	}
 
 }
