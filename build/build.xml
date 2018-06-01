@@ -23,6 +23,7 @@
   <condition property="platform" value="linux32"><os family="unix" arch="i386" /></condition>
   <condition property="platform" value="linux64"><os family="unix" arch="amd64" /></condition>
   <condition property="platform" value="linuxarm"><os family="unix" arch="arm" /></condition>
+  <condition property="platform" value="linuxaarch64"><os family="unix" arch="aarch64" /></condition>
 
   <condition property="windows_host" value="true"><os family="windows" /></condition>
 
@@ -33,6 +34,7 @@
   <condition property="linux"><equals arg1="${platform}" arg2="linux32" /></condition>
   <condition property="linux"><equals arg1="${platform}" arg2="linux64" /></condition>
   <condition property="linux"><equals arg1="${platform}" arg2="linuxarm" /></condition>
+  <condition property="linux"><equals arg1="${platform}" arg2="linuxaarch64" /></condition>
 
   <condition property="staging_folder" value="macosx"><equals arg1="${platform}" arg2="macosx" /></condition>
   <condition property="staging_folder" value="windows"><equals arg1="${platform}" arg2="windows" /></condition>
@@ -725,6 +727,9 @@
       <param name="arduinoOTA_version" value="${arduinoOTA-VERSION}"/>
     </antcall>
 -->
+  </target>
+
+  <target name="linuxaarch64-build" depends="linux-build">
   </target>
 
   <target name="linux32-build" depends="linux-libastyle-x86" description="Build linux (32-bit) version">
