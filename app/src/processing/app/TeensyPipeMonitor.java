@@ -34,6 +34,7 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 
 	private final boolean debug = false;
 	private String teensyname=null;
+	private String openport=null;
 	Process program=null;
 	inputPipeListener listener=null;
 	errorPipeListener errors=null;
@@ -82,6 +83,17 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 	public void open() throws Exception {
 		String port = getBoardPort().getAddress();
 		if (debug) System.out.println("TeensyPipeMonitor open " + port);
+		if (openport != null && port.equals(openport) && program != null
+		   && listener != null && listener.isAlive()
+		   && errors != null && errors.isAlive()) {
+			// correct port is already open
+			if (debug) System.out.println("TeensyPipeMonitor port already open");
+			return;
+		}
+		if (program != null || listener != null || errors != null) {
+			if (debug) System.out.println("TeensyPipeMonitor close old before open");
+			close();
+		}
 		String[] cmdline;
 		String command = BaseNoGui.getHardwarePath() + File.separator +
 			"tools" + File.separator + "teensy_serialmon";
@@ -102,6 +114,7 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 			program = null;
 		}
 		if (program != null) {
+			openport = new String(port);
 			textArea.setText("");
 			listener = new inputPipeListener();
 			listener.input = program.getInputStream();
@@ -129,6 +142,7 @@ public class TeensyPipeMonitor extends AbstractTextMonitor {
 			if (errors.isAlive()) errors.interrupt();
 			errors = null;
 		}
+		openport = null;
 		setTitle("[offline] (" + teensyname + ")");
 		super.close();
 	}
