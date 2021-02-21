@@ -311,6 +311,14 @@ public class Compiler implements MessageConsumer {
         }
       });
       MessageSiphon err = new MessageSiphon(proc.getErrorStream(), (msg) -> {
+        if (BaseNoGui.isTeensyduino() && msg.startsWith("teensy_size: ")) {
+          // Show teensy_size output as regular white color, not alarming red.
+          // This ugly patch is needed because arduino-builder discards stdout
+          // from all commands it runs when in non-verbose mode, so we are
+          // forced to use stderr (....or patch arduino-builder....)
+          System.out.print(msg.substring(13));
+          return;
+        }
         try {
           errStream.write(msg.getBytes());
         } catch (Exception e) {
