@@ -242,12 +242,16 @@ public class Compiler implements MessageConsumer {
     File installedPackagesFolder = new File(BaseNoGui.getSettingsFolder(), "packages");
 
     addPathFlagIfPathExists(cmd, "-hardware", BaseNoGui.getHardwareFolder());
-    addPathFlagIfPathExists(cmd, "-hardware", installedPackagesFolder);
+    if (!BaseNoGui.isTeensyduino()) {
+      addPathFlagIfPathExists(cmd, "-hardware", installedPackagesFolder);
+    }
     addPathFlagIfPathExists(cmd, "-hardware", BaseNoGui.getSketchbookHardwareFolder());
 
     addPathFlagIfPathExists(cmd, "-tools", BaseNoGui.getContentFile("tools-builder"));
     addPathFlagIfPathExists(cmd, "-tools", Paths.get(BaseNoGui.getHardwarePath(), "tools", "avr").toFile());
-    addPathFlagIfPathExists(cmd, "-tools", installedPackagesFolder);
+    if (!BaseNoGui.isTeensyduino()) {
+      addPathFlagIfPathExists(cmd, "-tools", installedPackagesFolder);
+    }
 
     addPathFlagIfPathExists(cmd, "-built-in-libraries", BaseNoGui.getContentFile("libraries"));
     addPathFlagIfPathExists(cmd, "-libraries", BaseNoGui.getSketchbookLibrariesFolder());
